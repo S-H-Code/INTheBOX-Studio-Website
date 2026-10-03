@@ -57,7 +57,7 @@ export default function Hero({ onStartClick }) {
 
         {/* Hero Description */}
         <p className="hero-description anim-hero-3">
-          We reject fragile page-builder templates and sluggish WordPress themes. INTheBOX constructs bespoke, lightning-fast digital flagships and web applications engineered with mathematical precision, clean code, and uncompromising visual craft.
+         No templates. No bloat. Just fast, custom digital experiences. Built with clean code, sharp design, and purpose.
         </p>
 
         {/* Action Buttons */}
