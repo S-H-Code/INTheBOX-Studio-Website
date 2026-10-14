@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import IntroAnimation from './components/IntroAnimation';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -9,15 +9,15 @@ import PackagesPage from './pages/PackagesPage';
 import WhyUsPage from './pages/WhyUsPage';
 import ProcessPage from './pages/ProcessPage';
 import ContactPage from './pages/ContactPage';
+import SEO from './components/SEO';
 
-const BRAND = 'INTheBOX Studio';
 const PAGES = {
-  '/': { key: 'home', title: `${BRAND} — Custom websites, built fast and built to convert` },
-  '/services': { key: 'services', title: `Services — ${BRAND}` },
-  '/packages': { key: 'packages', title: `Packages — ${BRAND}` },
-  '/why-us': { key: 'why-us', title: `Why us — ${BRAND}` },
-  '/process': { key: 'process', title: `Process — ${BRAND}` },
-  '/contact': { key: 'contact', title: `Contact — ${BRAND}` }
+  '/': { key: 'home' },
+  '/services': { key: 'services' },
+  '/packages': { key: 'packages' },
+  '/why-us': { key: 'why-us' },
+  '/process': { key: 'process' },
+  '/contact': { key: 'contact' }
 };
 
 export default function App() {
@@ -25,10 +25,6 @@ export default function App() {
   const route = PAGES[path] ? path : '/';
   const page = PAGES[route];
   const [selectedService, setSelectedService] = useState('Web Development');
-
-  useEffect(() => {
-    document.title = page.title;
-  }, [page]);
 
   const goContact = (service) => {
     if (service) setSelectedService(service);
@@ -58,6 +54,7 @@ export default function App() {
 
   return (
     <div className="studio-app" data-page={page.key}>
+      <SEO path={route} />
       <IntroAnimation />
       <Navbar route={route} onCtaClick={() => goContact()} />
       <main key={page.key}>{content}</main>
