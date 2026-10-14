@@ -1,82 +1,79 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Menu, X, ArrowUpRight } from 'lucide-react';
+import LogoMark from './LogoMark';
+import { Link } from '../router';
 
-export default function Navbar({ onCtaClick }) {
+const WHATSAPP =
+  "https://wa.me/918121653893?text=Hi%20INTheBOX%20Studio,%20I'd%20like%20to%20discuss%20a%20website%20project.";
+
+const LINKS = [
+  { to: '/services', label: 'Services' },
+  { to: '/packages', label: 'Packages' },
+  { to: '/why-us', label: 'Why us' },
+  { to: '/process', label: 'Process' },
+  { to: '/contact', label: 'Contact' }
+];
+
+export default function Navbar({ route, onCtaClick }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollToSection = (id) => {
-    setMobileOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+  // lock page scroll + close on Escape while the drawer is open
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e) => e.key === 'Escape' && setMobileOpen(false);
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => setMobileOpen(false), [route]);
 
   return (
     <>
-      <header className={`studio-navbar ${scrolled ? 'scrolled' : ''}`}>
-        <div className="nav-container">
-          {/* Brand Logo */}
-          <a
-            href="#"
-            className="studio-brand"
-            onClick={(e) => {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          >
-            <img src="/logo-icon.png" alt="INTheBOX Studio" className="brand-logo-img" />
-            <div className="brand-text">
+      <header className={`site-nav ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="nav-inner">
+          <Link to="/" className="brand" aria-label="INTheBOX Studio — home">
+            <LogoMark className="brand-mark" />
+            <span className="brand-word">
               <span className="brand-name">INTheBOX</span>
               <span className="brand-sub">STUDIO</span>
-            </div>
-          </a>
+            </span>
+          </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="nav-links hide-mobile">
-            <button type="button" onClick={() => scrollToSection('services')} className="nav-link">
-              Capabilities
-            </button>
-            <button type="button" onClick={() => scrollToSection('why-us')} className="nav-link">
-              Why Us
-            </button>
-            <button type="button" onClick={() => scrollToSection('approach')} className="nav-link">
-              Process
-            </button>
-            <button type="button" onClick={() => scrollToSection('contact-form')} className="nav-link">
-              Contact
-            </button>
+          <nav className="nav-links" aria-label="Primary">
+            {LINKS.map((l) => (
+              <Link key={l.to} to={l.to} className="nav-link" aria-current={route === l.to ? 'page' : undefined}>
+                {l.label}
+              </Link>
+            ))}
           </nav>
 
-          {/* Nav Right CTA */}
           <div className="nav-actions">
-            <a
-              href="https://wa.me/918121653893?text=Hi%20INTheBOX%20Studio,%20I'd%20like%20to%20discuss%20a%20website%20project."
-              target="_blank"
-              rel="noreferrer"
-              className="nav-whatsapp-link hide-mobile"
-              title="Chat directly on WhatsApp"
-            >
-              <span>WhatsApp Direct</span>
+            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="nav-text-link">
+              WhatsApp
             </a>
-            <button className="nav-cta-btn hide-mobile" onClick={onCtaClick}>
-              <span>Start a Project</span>
-              <ArrowUpRight size={15} />
+            <button type="button" className="btn btn-primary btn-sm nav-cta" onClick={onCtaClick}>
+              <span>Start a project</span>
+              <ArrowUpRight size={15} aria-hidden="true" />
             </button>
             <button
-              className="mobile-toggle"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle navigation menu"
+              type="button"
+              className="nav-toggle"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -84,53 +81,38 @@ export default function Navbar({ onCtaClick }) {
         </div>
       </header>
 
-      {/* Mobile Drawer */}
-      <div className={`mobile-drawer ${mobileOpen ? 'open' : ''}`}>
-        <div className="drawer-header">
-          <div className="drawer-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <img src="/logo-icon.png" alt="INTheBOX Studio" className="brand-logo-img small" />
-            <div className="brand-text">
-              <span className="brand-name">INTheBOX</span>
-              <span className="brand-sub">STUDIO</span>
-            </div>
-          </div>
-          <button className="drawer-close" onClick={() => setMobileOpen(false)}>
-            <X size={22} />
-          </button>
-        </div>
-        <div className="drawer-links">
-          <button onClick={() => scrollToSection('services')} className="drawer-link">
-            <span className="num">01</span>
-            <span>Capabilities</span>
-          </button>
-          <button onClick={() => scrollToSection('why-us')} className="drawer-link">
-            <span className="num">02</span>
-            <span>Why INTheBOX</span>
-          </button>
-          <button onClick={() => scrollToSection('approach')} className="drawer-link">
-            <span className="num">03</span>
-            <span>Our Process</span>
-          </button>
-          <button onClick={() => scrollToSection('contact-form')} className="drawer-link">
-            <span className="num">04</span>
-            <span>Start a Project</span>
-          </button>
-        </div>
-        <div className="drawer-footer">
+      <div id="mobile-menu" className={`drawer ${mobileOpen ? 'is-open' : ''}`} aria-hidden={!mobileOpen}>
+        <nav className="drawer-links" aria-label="Mobile">
+          {LINKS.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="drawer-link"
+              aria-current={route === l.to ? 'page' : undefined}
+              tabIndex={mobileOpen ? 0 : -1}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="drawer-foot">
           <button
-            className="drawer-cta"
+            type="button"
+            className="btn btn-primary btn-block"
+            tabIndex={mobileOpen ? 0 : -1}
             onClick={() => {
               setMobileOpen(false);
               onCtaClick();
             }}
           >
-            <span>Start a Project</span>
-            <ArrowUpRight size={18} />
+            <span>Start a project</span>
+            <ArrowUpRight size={17} aria-hidden="true" />
           </button>
-          <p className="drawer-note">Direct senior developer communication · Fast turnaround</p>
+          <a className="btn btn-outline btn-block" href={WHATSAPP} target="_blank" rel="noreferrer" tabIndex={mobileOpen ? 0 : -1}>
+            Chat on WhatsApp
+          </a>
         </div>
       </div>
-      {mobileOpen && <div className="drawer-backdrop" onClick={() => setMobileOpen(false)} />}
     </>
   );
 }

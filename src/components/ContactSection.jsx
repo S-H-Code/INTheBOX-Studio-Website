@@ -1,14 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Send, CheckCircle, AlertCircle, MessageSquare, Mail, Phone, Sparkles, Clock, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, CheckCircle, AlertCircle, MessageSquare, Mail, Info } from 'lucide-react';
 import { submitEnquiry } from '../services/api';
+import { SERVICES, PACKAGES } from '../data';
+
+// Dropdown choices: every service and package, straight from data.js
+const SERVICE_OPTIONS = [...SERVICES.map((s) => s.title), ...PACKAGES.map((p) => p.name)];
+
+// The enquiry API only accepts six legacy values, so map each choice to the closest one.
+// The visitor's exact choice is always appended to the message, so nothing is lost.
+const API_SERVICE = {
+  'Web Development': 'Business Website',
+  'Branding & Graphic Design': 'Business Website',
+  'SEO & Online Visibility': 'SEO / Growth',
+  'Digital Advertising & Lead Generation': 'SEO / Growth',
+  'Software & Automation': 'Web App Development',
+  'Website Maintenance & Technical Support': 'Business Website',
+  'Launch Box': 'Business Website',
+  'Growth Box': 'SEO / Growth',
+  'Scale Box': 'SEO / Growth'
+};
+
+const toApiPayload = (f) => ({
+  name: f.name,
+  email: f.email,
+  phone: f.phone,
+  service: API_SERVICE[f.service] || 'Business Website',
+  budgetTier: 'Custom',
+  timeline: f.timeline,
+  estimatedBudget: f.estimatedBudget,
+  details: `${f.details.trim()}\n\nService or package requested: ${f.service}`
+});
 
 export default function ContactSection({ preselectedData }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    service: 'Full Business Website',
-    budgetTier: 'Discuss Scope / Flexible',
+    service: 'Web Development',
     timeline: 'Standard (7-10 Days)',
     estimatedBudget: null,
     details: ''
@@ -24,12 +52,11 @@ export default function ContactSection({ preselectedData }) {
   useEffect(() => {
     if (preselectedData) {
       if (typeof preselectedData === 'string') {
-        setFormData((prev) => ({ ...prev, service: preselectedData }));
+        setFormData((prev) => ({ ...prev, service: SERVICE_OPTIONS.includes(preselectedData) ? preselectedData : prev.service }));
       } else if (typeof preselectedData === 'object') {
         setFormData((prev) => ({
           ...prev,
           service: preselectedData.service || prev.service,
-          budgetTier: preselectedData.budgetTier || prev.budgetTier,
           timeline: preselectedData.timeline || prev.timeline,
           estimatedBudget: preselectedData.estimatedBudget || prev.estimatedBudget,
           details: preselectedData.details ? preselectedData.details : prev.details
@@ -96,7 +123,7 @@ export default function ContactSection({ preselectedData }) {
     if (hasErrors) {
       setResponseStatus({
         type: 'error',
-        message: 'Please resolve the highlighted fields above.'
+        message: 'Please fix the highlighted fields and try again.'
       });
       return;
     }
@@ -106,12 +133,12 @@ export default function ContactSection({ preselectedData }) {
 
     setToast({
       type: 'info',
-      title: 'Sending Your Project Brief...',
-      desc: 'Connecting with our studio API.'
+      title: 'Sending your brief',
+      desc: 'This takes a moment.'
     });
 
     try {
-      const result = await submitEnquiry(formData);
+      const result = await submitEnquiry(toApiPayload(formData));
 
       setResponseStatus({
         type: 'success',
@@ -120,16 +147,15 @@ export default function ContactSection({ preselectedData }) {
 
       setToast({
         type: 'success',
-        title: 'Project Brief Sent!',
-        desc: 'Our developer will reach out directly on WhatsApp.'
+        title: 'Brief sent',
+        desc: 'We will reach out on WhatsApp or email within 24 hours.'
       });
 
       setFormData({
         name: '',
         email: '',
         phone: '',
-        service: 'Full Business Website',
-        budgetTier: 'Discuss Scope / Flexible',
+        service: 'Web Development',
         timeline: 'Standard (7-10 Days)',
         estimatedBudget: null,
         details: ''
@@ -139,12 +165,12 @@ export default function ContactSection({ preselectedData }) {
     } catch (err) {
       setResponseStatus({
         type: 'error',
-        message: 'Could not connect to studio server. Please tap the WhatsApp button on the right to chat directly.'
+        message: 'We could not reach our server. Please message us on WhatsApp instead and we will pick it up there.'
       });
       setToast({
         type: 'error',
-        title: 'Submission Notice',
-        desc: 'Direct WhatsApp link on the right is active 24/7.'
+        title: 'Could not send your brief',
+        desc: 'Message us on WhatsApp instead and we will pick it up there.'
       });
     } finally {
       setLoading(false);
@@ -155,146 +181,128 @@ export default function ContactSection({ preselectedData }) {
   };
 
   return (
-    <section id="contact-form" className="contact-wrap">
-      {/* Toast Feedback */}
+    <section className="content-section contact">
       {toast && (
-        <div className={`toast-notification ${toast.type}`}>
-          <div className="toast-icon">
+        <div className={`toast ${toast.type}`} role="status" aria-live="polite">
+          <span className="toast-icon" aria-hidden="true">
             {toast.type === 'success' && <CheckCircle size={20} />}
             {toast.type === 'error' && <AlertCircle size={20} />}
-            {toast.type === 'info' && <Sparkles size={20} />}
-          </div>
+            {toast.type === 'info' && <Info size={20} />}
+          </span>
           <div className="toast-body">
             <strong>{toast.title}</strong>
             <p>{toast.desc}</p>
           </div>
-          <button className="toast-close" onClick={() => setToast(null)}>×</button>
+          <button type="button" className="toast-close" onClick={() => setToast(null)} aria-label="Dismiss">×</button>
         </div>
       )}
 
-      <div className="contact-container">
-        {/* Main Form Card */}
-        <div className="contact-card">
-          <div className="contact-card-head">
-            <span className="eyebrow">
-              <span className="dot-pulse"></span>
-              START A PROJECT
-            </span>
-            <h2 className="contact-title">
-              Let's build your brand's <br />
-              <span className="text-gradient">high-converting website.</span>
-            </h2>
-            <p className="contact-sub">
-              Share your project vision, timeline, and goals below. We respond within 24 hours with a transparent project breakdown and timeline.
-            </p>
-          </div>
+      <div className="wrap contact-grid">
+        <div className="contact-main">
 
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="form-grid">
+          <form onSubmit={handleSubmit} noValidate className="form">
+            <div className="form-row">
               <div className={`field ${errors.name && touched.name ? 'has-error' : ''}`}>
-                <label>Your Name *</label>
+                <label htmlFor="f-name">Your name *</label>
                 <input
+                  id="f-name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="e.g. Alex Turner"
+                  placeholder="Alex Turner"
                   autoComplete="name"
+                  aria-invalid={!!(errors.name && touched.name)}
                 />
                 {errors.name && touched.name && <span className="field-error">{errors.name}</span>}
               </div>
 
               <div className={`field ${errors.email && touched.email ? 'has-error' : ''}`}>
-                <label>Email Address *</label>
+                <label htmlFor="f-email">Email address *</label>
                 <input
+                  id="f-email"
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="e.g. alex@company.com"
+                  placeholder="alex@company.com"
                   autoComplete="email"
+                  aria-invalid={!!(errors.email && touched.email)}
                 />
                 {errors.email && touched.email && <span className="field-error">{errors.email}</span>}
               </div>
             </div>
 
-            <div className="form-grid">
+            <div className="form-row">
               <div className={`field ${errors.phone && touched.phone ? 'has-error' : ''}`}>
-                <label>WhatsApp / Phone Number *</label>
+                <label htmlFor="f-phone">WhatsApp or phone number *</label>
                 <input
+                  id="f-phone"
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="e.g. +91 81216 53893"
+                  placeholder="+91 81216 53893"
                   autoComplete="tel"
+                  aria-invalid={!!(errors.phone && touched.phone)}
                 />
                 {errors.phone && touched.phone && <span className="field-error">{errors.phone}</span>}
               </div>
 
               <div className="field">
-                <label>Service or Package *</label>
-                <select name="service" value={formData.service} onChange={handleChange}>
-                  <option value="High-Converting Landing Page">High-Converting Landing Page</option>
-                  <option value="Full Business Website">Full Business Website</option>
-                  <option value="Custom Web App & Catalog">Custom Web App &amp; Catalog</option>
-                  <option value="Full Website Redesign">Full Website Redesign</option>
-                  <option value="Speed & SEO Optimization">Speed &amp; SEO Optimization</option>
-                  <option value="Custom Enterprise">Custom Enterprise Build</option>
+                <label htmlFor="f-service">Service or package *</label>
+                <select id="f-service" name="service" value={formData.service} onChange={handleChange}>
+                  <optgroup label="Services">
+                    {SERVICES.map((s) => (
+                      <option key={s.id} value={s.title}>{s.title}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Packages">
+                    {PACKAGES.map((p) => (
+                      <option key={p.id} value={p.name}>{p.name} · {p.price} {p.per}</option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
             </div>
 
-            <div className="form-grid">
+            <div className="form-row single">
               <div className="field">
-                <label>Project Scope / Tier</label>
-                <select name="budgetTier" value={formData.budgetTier} onChange={handleChange}>
-                  <option value="Discuss Scope / Flexible">Discuss Scope / Flexible</option>
-                  <option value="Standard Build">Standard Build</option>
-                  <option value="Growth & Custom Scope">Growth &amp; Custom Scope</option>
-                  <option value="Enterprise Solution">Enterprise Solution</option>
-                </select>
-              </div>
-
-              <div className="field">
-                <label>Target Launch Timeline</label>
+                <label htmlFor="f-timeline">Target launch timeline</label>
                 <input
+                  id="f-timeline"
                   name="timeline"
                   value={formData.timeline}
                   onChange={handleChange}
-                  placeholder="e.g. 5-7 Days / ASAP"
+                  placeholder="For example: within 2 weeks, or as soon as possible"
                 />
               </div>
             </div>
 
             <div className={`field ${errors.details && touched.details ? 'has-error' : ''}`}>
-              <label>Project Scope, Goals &amp; Competitor References *</label>
+              <label htmlFor="f-details">Project goals and reference sites *</label>
               <textarea
-                rows={4}
+                id="f-details"
+                rows={5}
                 name="details"
                 value={formData.details}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                placeholder="Tell us what you are building, any reference websites you like, and your target launch date..."
+                placeholder="What are you building, which sites do you like, and when do you want to launch?"
+                aria-invalid={!!(errors.details && touched.details)}
               />
               {errors.details && touched.details && <span className="field-error">{errors.details}</span>}
             </div>
 
-            <button className="submit-btn" type="submit" disabled={loading}>
-              {loading ? (
-                <span>Transmitting Project Brief...</span>
-              ) : (
-                <>
-                  <span>Send Project Enquiry</span>
-                  <Send size={16} />
-                </>
-              )}
+            <button className="btn btn-dark btn-lg submit" type="submit" disabled={loading}>
+              <span>{loading ? 'Sending…' : 'Send enquiry'}</span>
+              {!loading && <ArrowUpRight size={18} aria-hidden="true" />}
             </button>
 
             {responseStatus && (
-              <div className={`status-banner ${responseStatus.type}`}>
+              <div className={`form-status ${responseStatus.type}`} role="status">
                 {responseStatus.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
                 <span>{responseStatus.message}</span>
               </div>
@@ -302,47 +310,39 @@ export default function ContactSection({ preselectedData }) {
           </form>
         </div>
 
-        {/* Side Panel: Direct Contacts & Guarantees */}
-        <aside className="side-panel">
-          <div className="info-card highlight-card">
-            <div className="card-top-icon">
-              <MessageSquare size={22} />
-            </div>
-            <h3>Prefer instant communication?</h3>
-            <p>Skip the form and chat directly with our developer on WhatsApp for immediate feasibility checks and answers.</p>
+        <aside className="contact-side" aria-label="Other ways to reach us">
+          <div className="side-block" data-tone="green">
+            <MessageSquare size={22} aria-hidden="true" />
+            <h3>Prefer to chat?</h3>
+            <p>Skip the form and message the developer directly for a quick feasibility check.</p>
             <a
-              className="info-btn-whatsapp"
+              className="btn btn-dark"
               href="https://wa.me/918121653893?text=Hi%20INTheBOX%20Studio,%20I'd%20like%20to%20discuss%20a%20website%20project."
               target="_blank"
               rel="noreferrer"
             >
-              <span>Chat on WhatsApp Direct ↗</span>
+              <span>Chat on WhatsApp</span>
+              <ArrowUpRight size={17} aria-hidden="true" />
             </a>
           </div>
 
-          <div className="info-card">
-            <div className="card-top-icon">
-              <Mail size={22} />
-            </div>
-            <h3>Email Studio Desk</h3>
-            <p>Send Figma links, brand references, or RFPs directly to our studio inbox.</p>
-            <a className="info-link" href="mailto:hello@intheboxstudio.in">
-              <span>hello@intheboxstudio.in ↗</span>
-            </a>
+          <div className="side-block" data-tone="blue">
+            <Mail size={22} aria-hidden="true" />
+            <h3>Email the studio</h3>
+            <p>Send Figma links, brand references or briefs to our inbox.</p>
+            <a className="side-link" href="mailto:hello@intheboxstudio.in">hello@intheboxstudio.in</a>
           </div>
 
-          <div className="info-card stats-subcard">
-            <div className="stats-row">
-              <div className="stats-col">
-                <span className="val">&lt; 24h</span>
-                <span className="lbl">Response SLA</span>
-              </div>
-              <div className="stats-col">
-                <span className="val">100%</span>
-                <span className="lbl">Code Ownership</span>
-              </div>
+          <dl className="side-stats" data-tone="lilac">
+            <div>
+              <dt>&lt; 24h</dt>
+              <dd>Response time</dd>
             </div>
-          </div>
+            <div>
+              <dt>100%</dt>
+              <dd>Code ownership</dd>
+            </div>
+          </dl>
         </aside>
       </div>
     </section>
